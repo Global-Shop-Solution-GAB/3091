@@ -1,0 +1,123 @@
+Program.Sub.Preflight.Start
+
+Variable.UDT.ROUTER.Define("Number",String)
+Variable.UDT.ROUTER.Define("LMO",String)
+Variable.UDT.ROUTER.Define("Workcenter",String)
+Variable.UDT.ROUTER.Define("Operation",String)
+Variable.UDT.ROUTER.Define("RunTime",String)
+Variable.UDT.ROUTER.Define("Comment",String)
+Variable.UDT.ROUTER.Define("Part",String)
+Variable.UDT.ROUTER.Define("UM",String)
+Variable.UDT.ROUTER.Define("OverLap",String)
+
+Variable.uGlobal.uROUTER.Declare("ROUTER")
+Variable.Global.Lines.Declare(Long,-1)
+
+Program.Sub.Preflight.End
+
+Program.Sub.ROUTERClear.Start
+
+V.uGlobal.uROUTER.Redim(0,0)
+V.Global.Lines.Set(-1)
+
+Program.Sub.ROUTERClear.End
+
+Program.Sub.ROUTERGenerate.Start
+V.Local.filedir.Declare(String)
+V.Local.filename.Declare(String)
+V.Local.ROUTERload.Declare(String)
+V.Local.temp.Declare(String)
+V.Local.ROUTER.Declare(String)
+V.Local.ix.Declare(Long)
+'file layout
+'    '05  EX-RT-NUMBER             PIC X(20).
+'    '05  EX-RT-LMO                PIC X(01).
+'    '05  EX-RT-WORKCENTER         PIC X(04).
+'    '05  EX-RT-OPERATION          PIC X(06).
+'    '05  EX-RT-OVERLAP            PIC X(16).
+'    '05  EX-RT-RUN-TIME           PIC X(16).
+'    '05  EX-RT-COMMENT            PIC X(30).
+'    '05  EX-RT-PART               PIC X(20).
+'    '05  EX-RT-UM                 PIC X(02).
+
+
+'loop through UDT
+F.Intrinsic.Control.For(V.Local.ix,V.uGlobal.uROUTER.LBound,V.uglobal.uROUTER.UBound,1)
+	F.Intrinsic.Control.If(V.uGlobal.uROUTER(v.Local.ix)!Number,<>,"")
+		F.Intrinsic.String.Concat(V.Local.ROUTER,V.uGlobal.uROUTER(v.Local.ix)!Number,V.uGlobal.uROUTER(v.Local.ix)!LMO,V.uGlobal.uROUTER(v.Local.ix)!WorkCenter,V.uGlobal.uROUTER(v.Local.ix)!Operation,V.local.ROUTER)
+		F.Intrinsic.Control.If(V.Local.ix,<>,V.uGlobal.uROUTER.UBound)
+			F.Intrinsic.string.Concat(V.Local.ROUTER,V.uGlobal.uROUTER(v.Local.ix)!overlap,V.uGlobal.uROUTER(v.Local.ix)!RunTime,V.uGlobal.uROUTER(v.Local.ix)!Comment,V.uGlobal.uROUTER(v.Local.ix)!Part,V.uGlobal.uROUTER(v.Local.ix)!UM,V.Ambient.newline,V.Local.ROUTER)
+		F.Intrinsic.Control.elseIf(V.Local.ix,=,V.uGlobal.uROUTER.UBound)
+			F.Intrinsic.string.Concat(V.Local.ROUTER,V.uGlobal.uROUTER(v.Local.ix)!overlap,V.uGlobal.uROUTER(v.Local.ix)!RunTime,V.uGlobal.uROUTER(v.Local.ix)!Comment,V.uGlobal.uROUTER(v.Local.ix)!Part,V.uGlobal.uROUTER(v.Local.ix)!UM,V.Local.ROUTER)
+		F.Intrinsic.Control.endif
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.ix)
+
+F.Intrinsic.String.Concat("LB",V.Caller.Terminal,V.Caller.CompanyCode,V.Local.filename)
+'output file
+F.Intrinsic.String.Concat(V.Caller.FilesDir,"\",V.Local.filename,V.Local.filedir)
+F.Intrinsic.File.String2File(V.Local.filedir,V.Local.ROUTER)
+F.Intrinsic.Debug.stop
+
+F.Intrinsic.String.RPad(V.Caller.User," ",8,V.Local.temp)
+F.Intrinsic.String.Concat(V.Ambient.DblQuote,V.Caller.CompanyCode,V.Caller.Terminal,"SUPERVSR",V.Local.filename,V.Ambient.DblQuote,V.Local.ROUTERLOAD)
+F.Intrinsic.Control.DoEvents
+F.Intrinsic.Task.LaunchGSSSync("XUPLRTR3","-c",V.Local.ROUTERLOAD)
+
+Program.Sub.ROUTERGenerate.End
+
+Program.Sub.ROUTERAddRecord.Start
+'arguments, Number, part, RunTime, pl, Comment, um, lmo,worcenter, overlap
+'LMO need to be C for comment
+'LMO needs to be L for workcenter
+'LMO needs to be M for material RunTime is quantity when LMO is M
+
+V.Local.shold.Declare(String)
+
+F.Intrinsic.control.If(V.Global.Lines,=,-1)
+	V.uGlobal.uROUTER.Redim(0,0)
+	V.Global.Lines.Set(0)
+F.Intrinsic.Control.ElseIf(V.Global.Lines,<>,-1)
+	F.Intrinsic.Math.Add(V.Global.Lines,1,V.Global.lines)
+	V.uGlobal.uROUTER.Redimpreserve(0,V.Global.Lines)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.String.RPad(V.Args.Number," ",20,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!Number.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.LMO," ",1,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,1,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!LMO.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.WorkCenter," ",4,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,4,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!WorkCenter.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.RunTime," ",16,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!RunTime.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.PL," ",6,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!Operation.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.Comment," ",30,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,30,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!Comment.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.Part," ",20,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!Part.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.UM," ",2,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,2,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!UM.set(V.local.shold)
+
+F.Intrinsic.String.RPad(V.Args.OverLap," ",16,V.Local.shold)
+F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+V.uGlobal.uROUTER(v.Global.Lines)!Overlap.set(V.local.shold)
+
+Program.Sub.ROUTERAddRecord.End
+
+
