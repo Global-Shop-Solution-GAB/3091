@@ -1,0 +1,439 @@
+Program.Sub.ScreenSU.Start
+gui.F_UL_Select..create
+gui.F_UL_Select..caption("BOM/Router Upload")
+gui.F_UL_Select..size(3375,2280)
+gui.F_UL_Select..position(0,0)
+gui.F_UL_Select..event(unload,Unload)
+gui.F_UL_Select..alwaysontop(False)
+gui.F_UL_Select..fontname("Arial")
+gui.F_UL_Select..fontsize(8)
+gui.F_UL_Select..forecolor(0)
+gui.F_UL_Select..fontstyle(False,False,False,False,)
+gui.F_UL_Select..BackColor(-2147483633)
+gui.F_UL_Select..controlbox(True)
+gui.F_UL_Select..maxbutton(True)
+gui.F_UL_Select..minbutton(True)
+gui.F_UL_Select..mousepointer(0)
+gui.F_UL_Select..moveable(True)
+gui.F_UL_Select..sizeable(True)
+gui.F_UL_Select..ShowInTaskBar(True)
+gui.F_UL_Select..titlebar(True)
+gui.F_UL_Select.frmULType.create(frame)
+gui.F_UL_Select.frmULType.caption("Frame")
+gui.F_UL_Select.frmULType.size(2910,780)
+gui.F_UL_Select.frmULType.position(200,200)
+gui.F_UL_Select.frmULType.visible(True)
+gui.F_UL_Select.frmULType.borderstyle(0)
+gui.F_UL_Select.frmULType.fontname("Arial")
+gui.F_UL_Select.frmULType.fontsize(8)
+gui.F_UL_Select.optUL0.create(option)
+gui.F_UL_Select.optUL0.caption("Router")
+gui.F_UL_Select.optUL0.visible(True)
+gui.F_UL_Select.optUL0.size(1575,255)
+gui.F_UL_Select.optUL0.zorder(0)
+gui.F_UL_Select.optUL0.position(100,250)
+gui.F_UL_Select.optUL0.enabled(True)
+gui.F_UL_Select.optUL0.alignment(0)
+gui.F_UL_Select.optUL0.parent("frmultype")
+gui.F_UL_Select.optUL0.fontname("Arial")
+gui.F_UL_Select.optUL0.fontsize(8)
+gui.F_UL_Select.optUL1.create(option)
+gui.F_UL_Select.optUL1.caption("BOM")
+gui.F_UL_Select.optUL1.visible(True)
+gui.F_UL_Select.optUL1.size(1575,255)
+gui.F_UL_Select.optUL1.zorder(0)
+gui.F_UL_Select.optUL1.position(1805,250)
+gui.F_UL_Select.optUL1.enabled(True)
+gui.F_UL_Select.optUL1.alignment(0)
+gui.F_UL_Select.optUL1.parent("frmultype")
+gui.F_UL_Select.optUL1.fontname("Arial")
+gui.F_UL_Select.optUL1.fontsize(8)
+gui.F_UL_Select.cmdUL.create(button)
+gui.F_UL_Select.cmdUL.caption("Select")
+gui.F_UL_Select.cmdUL.visible(True)
+gui.F_UL_Select.cmdUL.size(855,375)
+gui.F_UL_Select.cmdUL.zorder(0)
+gui.F_UL_Select.cmdUL.position(200,975)
+gui.F_UL_Select.cmdUL.enabled(True)
+gui.F_UL_Select.cmdUL.fontname("Arial")
+gui.F_UL_Select.cmdUL.fontsize(8)
+gui.F_UL_Select.cmdUL.event(click,Selection)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.External.Include.Library("RouterUpload.lib")
+Variable.Global.sError.Declare(String)
+Variable.Global.sFileP.Declare(String)
+Program.External.Include.Library("BOMUpload.lib")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sFileLoc.Declare(String)
+
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+F.Intrinsic.UI.ShowOpenFileDialog("","*.*",V.Caller.FilesDir,V.Local.sFileLoc)
+Function.Intrinsic.Control.If(Variable.local.sFileLoc,=,"***CANCEL***")
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.Else
+	V.Global.sFileP.Set(V.Local.sFileLoc)
+	Gui.F_UL_Select..Show
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+
+Program.Sub.ErrorLog.Start
+V.Local.iHdl.Declare(Long)
+V.Local.sFile.Declare(String)
+V.Local.sPath.Declare(String)
+
+
+'F.Intrinsic.File.GetHandle(V.Local.iHdl)
+F.Intrinsic.String.Concat(V.Global.sError,V.Ambient.NewLine,V.Ambient.Now,V.Ambient.Tab,V.Args.sText,V.Global.sError)
+
+
+Program.Sub.ErrorLog.End
+
+Program.Sub.Load_Records.Start
+V.Local.sFileLoc.Declare(String)
+Variable.Local.sReadFile.Declare(String)
+V.Local.iRow.Declare(String)
+V.Local.iPos.Declare(String)
+V.Local.ix.Declare(Long)
+V.Local.iFileHdl.Declare(Long)
+V.Local.bFileEnd.Declare(Boolean)
+V.Local.sUM.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.iCols.Declare(Long)
+V.Local.sSt.Declare(String)
+V.Local.iCt.Declare(Long)
+V.Local.sParent.Declare(String)
+V.Local.sPart.Declare(String)
+V.Local.sComment.Declare(String)
+V.Local.sLMO.Declare(String)
+V.Local.sWC.Declare(String)
+V.Local.sOL.Declare(String)
+V.Local.sOp.Declare(String)
+V.Local.fRT.Declare(Float)
+V.Local.sDesc.Declare(String)
+V.Local.sText.Declare(String)
+
+'F.Intrinsic.UI.ShowOpenFileDialog("","*.*",V.Caller.FilesDir,V.Local.sFileLoc)
+'Function.Intrinsic.Control.If(Variable.local.sFileLoc,=,"***CANCEL***")
+'	F.Intrinsic.Control.End
+'Function.Intrinsic.Control.EndIf
+'F.Intrinsic.Debug.InvokeDebugger
+F.Intrinsic.Debug.Stop
+Gui.F_UL_Select..Visible(false)
+F.Intrinsic.File.GetHandle(V.Local.iFilehdl)
+F.Intrinsic.File.OpenForRead(V.Global.sFileP,V.Local.iFileHdl)
+F.Automation.MSExcel.ReadSpreadsheet(V.Global.sFileP,50,50,V.Local.sReadFile)
+F.Intrinsic.String.Split(V.Local.sReadFile,"&^&",V.Local.sSt)
+F.Intrinsic.Control.If(Variable.Screen.F_UL_Select!optUL0.Value,=,True)
+	'Router
+	F.Intrinsic.Debug.Stop
+	F.Intrinsic.String.Split(V.Local.sReadFile,"$!$",V.Local.irow)
+	F.Intrinsic.Control.CallSub("RouterClear")
+	F.Intrinsic.Control.For(V.Local.ix,3,V.Local.irow.UBound,1)
+		F.Intrinsic.String.Split(V.Local.sReadFile,"*!*",V.Local.iCols)
+		'F.Intrinsic.Control.For(v.Local.iPos,35,42,1)
+			F.Intrinsic.Control.If(V.Local.ix,=,2)
+				V.Local.sParent.Set(V.Local.iCols(35))
+				F.Intrinsic.UI.Msgbox(V.Local.sParent)
+			F.Intrinsic.Control.Else
+				V.Local.sLMO.Set(V.Local.sLMO(36))
+				F.Intrinsic.Control.If(V.Local.sLMO,=,"M")
+					V.Local.sWC.Set("")
+					V.Local.sPart.Set(V.Local.iCols(37))
+				F.Intrinsic.Control.ElseIf(V.Local.sLMO,=,"L")
+					V.Local.sWC.Set(V.Local.iCols(37))
+					V.Local.sPart.Set("")
+				F.Intrinsic.Control.EndIf
+				V.Local.fRT.Set(V.Local.iCols(39))
+				V.Local.sDesc.Set(V.Local.iCols(41))
+			'F.Intrinsic.Control.Next(v.Local.iPos)
+			'code to validate Part
+			F.Global.Inventory.GetPartInfo(V.Local.sPart,"","",V.Local.sReadFile)
+			F.Intrinsic.Control.If(V.Local.sReadFile,=,"***NOPARTFOUND***")
+				F.Global.Inventory.CreatePart(V.Local.sPart,"EA",V.Local.sDesc,"","FG","","","","0.0")
+				F.Intrinsic.String.Concat(V.Local.sPart,"' has been added to Inventory as it did not exist, please add Price to the part.",V.Local.sText)
+				F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sText)
+			F.Intrinsic.Control.EndIf
+			'code to validate WC
+			F.Intrinsic.String.Concat("Select Machine from WORKCENTERS where Machine='",V.Local.sWC,"'",V.Local.sSQL)
+			F.ODBC.Connection!con.OpenRecordsetRO("rstWC",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.con!rstWC.EOF,=,True)
+				'write to log WC doesn't exsist
+				F.Intrinsic.String.Concat("The following WC does not exist in the WORKCENTER table '",V.Local.sWC,"'",V.Local.stext)
+				F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sWC)
+			F.Intrinsic.Control.EndIf
+			'code to validate Router
+			F.Intrinsic.String.Concat("Select Router from V_Router_Header where Router='",V.Local.sPart,"'",V.Local.sSQL)
+			F.ODBC.Connection!con.OpenRecordsetRO("rstRtr",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.con!rstRtr.EOF,"=",False)
+				''log to error log
+				F.Intrinsic.String.Concat("Router : ",V.Local.sParent," has already been uploaded",V.Local.sText)
+				F.Intrinsic.Control.CallSub("ErrorLog","sText",V.Local.sText)
+			F.Intrinsic.Control.EndIf
+			'code to addrecord for Router or BOM
+			F.Intrinsic.Control.CallSub("RouterAddRecord","Number",V.Local.sParent,"LMO",V.Local.sLMO,"RunTIme",V.Local.fRT,"Comment","","Workcenter",V.Local.sWC,"Operation",V.Local.sOp,"OverLap","","UM",V.Local.sUM,"Part",V.Local.sPart)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.ix)
+F.Intrinsic.Control.Else
+	'BOM
+	F.Intrinsic.Control.For(V.Local.iCt,4,14,1)
+		F.Intrinsic.String.Split(V.Local.sReadFile,"$!$",V.Local.irow)
+		F.Intrinsic.Control.For(V.Local.ix,2,V.Local.irow.UBound,1)
+			F.Intrinsic.String.Split(V.Local.sReadFile,"*!*",V.Local.iCols)
+			'code to validate Part
+			'code to validate WC
+			'code to validate Router
+			'add error log code for each of the validations
+			'code to addrecord for Router or BOM
+			
+		F.Intrinsic.Control.Next(V.Local.ix)
+	F.Intrinsic.Control.Next(V.Local.iCt)
+F.Intrinsic.Control.EndIf
+
+
+		
+		
+
+Program.Sub.Load_Records.End
+
+Program.Sub.Unload.Start
+F.ODBC.Connection!con.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.Router.Start
+V.Local.sFileLoc.Declare(String)
+Variable.Local.sReadFile.Declare(String)
+V.Local.iRow.Declare(String)
+V.Local.iPos.Declare(String)
+V.Local.ix.Declare(Long)
+V.Local.iFileHdl.Declare(Long)
+V.Local.bFileEnd.Declare(Boolean)
+V.Local.sUM.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.iCols.Declare(Long)
+V.Local.sSt.Declare(String)
+V.Local.iCt.Declare(Long)
+V.Local.sParent.Declare(String)
+V.Local.sPart.Declare(String)
+V.Local.sComment.Declare(String)
+V.Local.sLMO.Declare(String)
+V.Local.sWC.Declare(String)
+V.Local.sOL.Declare(String)
+V.Local.sOp.Declare(String)
+V.Local.fRT.Declare(Float)
+V.Local.sDesc.Declare(String)
+V.Local.sText.Declare(String)
+V.Local.sApp.Declare(String)
+V.Local.sWB.Declare(String)
+V.Local.sWS.Declare(String)
+V.Local.iRowCount.Declare(Long)
+V.Local.bRet.Declare(Boolean)
+V.Local.sSeq.Declare(String)
+V.Local.fSU.Declare(Float)
+
+'F.Intrinsic.Debug.Stop
+V.Local.sApp.Set("MSExcel")
+V.Local.sWB.Set("WB")
+Function.Automation.MSExcel.CheckPresence(Variable.local.bRet)
+F.Intrinsic.Control.If(V.Local.bRet,=,True)
+
+	Gui.F_UL_Select..Visible(false)
+
+	F.Intrinsic.File.GetHandle(V.Local.iFilehdl)
+	F.Intrinsic.File.OpenForRead(V.Global.sFileP,V.Local.iFileHdl)
+	Function.Automation.MSExcel.CreateAppObject(V.Local.sApp)
+	Function.Automation.MSExcel.OpenWorkbook(V.Local.sApp,V.Local.sWB,V.Global.sFileP)
+	F.Automation.MSExcel.OpenWorksheet(V.Local.sWB,V.Local.sWS,1)
+		'Router
+		V.Local.iRow.Set(2)
+		F.Intrinsic.Debug.Stop
+		F.Intrinsic.Control.CallSub("RouterClear")
+		F.Automation.MSExcel.RowCount(V.Local.sWS,V.Local.iRowCount)
+		F.Intrinsic.Control.For(V.Local.iRow,2,V.Local.iRowCount,1)
+			F.Automation.MSExcel.ReadRow(V.Local.sWS,V.Local.iRow,35,42,V.Local.sST)
+			F.Intrinsic.String.Split(V.Local.sST,"*!*",V.Local.sst)
+			F.Intrinsic.Debug.Stop
+			F.Intrinsic.Control.If(V.Local.sSt.UBound,>=,0)
+				'F.Intrinsic.control.If(V.Local.sST.UBound,>=,2)
+					F.Intrinsic.Control.If(V.Local.iRow,=,2)
+						V.Local.sParent.Set(V.Local.sST(0))
+						F.Intrinsic.UI.Msgbox(V.Local.sParent)
+					F.Intrinsic.Control.Else
+						V.Local.sLMO.Set(V.Local.sST(1))
+						F.Intrinsic.Control.If(V.Local.sLMO,=,"M")
+							V.Local.sWC.Set("")
+							V.Local.sPart.Set(V.Local.sST(2))
+						F.Intrinsic.Control.ElseIf(V.Local.sLMO,=,"L")
+							V.Local.sWC.Set(V.Local.sST(2))
+							V.Local.sPart.Set("")
+						F.Intrinsic.Control.EndIf
+						V.Local.fRT.Set(V.Local.sST(4))
+						V.Local.fSU.Set(V.Local.sSt(3))
+						V.Local.sSeq.Set(V.Local.sSt(0))
+						V.Local.sDesc.Set(V.Local.sST(6))
+					F.Intrinsic.Control.EndIf
+					'F.Intrinsic.Control.Next(v.Local.iPos)
+					'code to validate Part
+					F.Global.Inventory.GetPartInfo(V.Local.sPart,"","",V.Local.sReadFile)
+					F.Intrinsic.Control.If(V.Local.sReadFile,=,"***NOPARTFOUND***")
+						F.Global.Inventory.CreatePart(V.Local.sPart,"EA",V.Local.sDesc,"","FG","","","","0.0")
+						F.Intrinsic.String.Concat(V.Local.sPart,"' has been added to Inventory as it did not exist, please add Price to the part.",V.Local.sText)
+						F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sText)
+					F.Intrinsic.Control.EndIf
+					'code to validate WC
+					F.Intrinsic.String.Concat("Select Machine from WORKCENTERS where Machine='",V.Local.sWC,"'",V.Local.sSQL)
+					F.ODBC.Connection!con.OpenRecordsetRO("rstWC",V.Local.sSQL)
+					F.Intrinsic.Control.If(V.ODBC.con!rstWC.EOF,=,True)
+						'write to log WC doesn't exsist
+						F.Intrinsic.String.Concat("The following WC does not exist in the WORKCENTER table '",V.Local.sWC,"'",V.Local.stext)
+						F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sWC)
+					F.Intrinsic.Control.EndIf
+					F.ODBC.con!rstWC.Close
+					'code to validate Router
+					F.Intrinsic.String.Concat("Select Router from V_Router_Header where Router='",V.Local.sPart,"'",V.Local.sSQL)
+					F.ODBC.Connection!con.OpenRecordsetRO("rstRtr",V.Local.sSQL)
+					F.Intrinsic.Control.If(V.ODBC.con!rstRtr.EOF,"=",False)
+						''log to error log
+						F.Intrinsic.String.Concat("Router : ",V.Local.sParent," has already been uploaded",V.Local.sText)
+						F.Intrinsic.Control.CallSub("ErrorLog","sText",V.Local.sText)
+					F.Intrinsic.Control.EndIf
+					F.ODBC.con!rstRtr.Close
+					'code to addrecord for Router or BOM
+					F.Intrinsic.Control.CallSub("RouterAddRecord","Number",V.Local.sParent,"LMO",V.Local.sLMO,"RunTIme",V.Local.fRT,"Comment","","Workcenter",V.Local.sWC,"Operation",V.Local.sOp,"OverLap","","UM",V.Local.sUM,"Part",V.Local.sPart)
+'					F.Intrinsic.Control.CallSub("RouterAddRecord","Number",V.Local.sParent,"LMO",V.Local.sLMO,"RunTIme",V.Local.fRT,"Comment","","Workcenter",V.Local.sWC,"Operation",V.Local.sOp,"OverLap","","UM",V.Local.sUM,"Part",V.Local.sPart,"Setup",v.Local.fSU,"Sequence",v.Local.sSeq.,")
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.iRow)
+F.Intrinsic.Control.Endif
+F.Intrinsic.Control.CallSub("RouterGenerate")
+F.Automation.MSExcel.DestroyAllObjects(V.Local.sApp,V.Local.sWB,V.Local.sWS)
+F.Intrinsic.Control.CallSub(Unload)
+
+Program.Sub.Router.End
+
+Program.Sub.BOM.Start
+V.Local.sFileLoc.Declare(String)
+Variable.Local.sReadFile.Declare(String)
+V.Local.iRow.Declare(String)
+V.Local.iPos.Declare(String)
+V.Local.ix.Declare(Long)
+V.Local.iFileHdl.Declare(Long)
+V.Local.bFileEnd.Declare(Boolean)
+V.Local.sUM.Declare(String)
+V.Local.sSQL.Declare(String)
+V.Local.iCols.Declare(Long)
+V.Local.sSt.Declare(String)
+V.Local.iCt.Declare(Long)
+V.Local.sParent.Declare(String)
+V.Local.sPart.Declare(String)
+V.Local.sComment.Declare(String)
+V.Local.sLMO.Declare(String)
+V.Local.sWC.Declare(String)
+V.Local.sOL.Declare(String)
+V.Local.sOp.Declare(String)
+V.Local.fRT.Declare(Float)
+V.Local.sDesc.Declare(String)
+V.Local.sText.Declare(String)
+V.Local.sApp.Declare(String)
+V.Local.sWB.Declare(String)
+V.Local.sWS.Declare(String)
+V.Local.iRowCount.Declare(Long)
+V.Local.bRet.Declare(Boolean)
+
+V.Local.sApp.Set("MSExcel")
+V.Local.sWB.Set("WB")
+Function.Automation.MSExcel.CheckPresence(Variable.local.bRet)
+F.Intrinsic.Control.If(V.Local.bRet,=,True)
+
+	Gui.F_UL_Select..Visible(false)
+
+	F.Intrinsic.File.GetHandle(V.Local.iFilehdl)
+	F.Intrinsic.File.OpenForRead(V.Global.sFileP,V.Local.iFileHdl)
+	Function.Automation.MSExcel.CreateAppObject(V.Local.sApp)
+	Function.Automation.MSExcel.OpenWorkbook(V.Local.sApp,V.Local.sWB,V.Global.sFileP)
+	F.Intrinsic.Control.For(V.Local.ix,3,11,1)
+		F.Automation.MSExcel.OpenWorksheet(V.Local.sWB,V.Local.sWS,V.Local.ix)
+		'Router
+		V.Local.iRow.Set(2)
+		F.Intrinsic.Debug.Stop
+		F.Intrinsic.Control.CallSub("RouterClear")
+		F.Intrinsic.Control.CallSub("BOMClear")
+		F.Automation.MSExcel.RowCount(V.Local.sWS,V.Local.iRowCount)
+		F.Intrinsic.Control.For(V.Local.iRow,2,V.Local.iRowCount,1)
+			F.Automation.MSExcel.ReadRow(V.Local.sWS,V.Local.iRow,35,42,V.Local.sST)
+			F.Intrinsic.String.Split(V.Local.sST,"*!*",V.Local.sst)
+			'F.Intrinsic.control.If(V.Local.sST.UBound,>=,2)
+				F.Intrinsic.Control.If(V.Local.iRow,=,2)
+					V.Local.sParent.Set(V.Local.sST(0))
+					F.Intrinsic.UI.Msgbox(V.Local.sParent)
+				F.Intrinsic.Control.Else
+					V.Local.sLMO.Set(V.Local.sST(1))
+					F.Intrinsic.Control.If(V.Local.sLMO,=,"M")
+						V.Local.sWC.Set("")
+						V.Local.sPart.Set(V.Local.sST(2))
+					F.Intrinsic.Control.ElseIf(V.Local.sLMO,=,"L")
+						V.Local.sWC.Set(V.Local.sST(2))
+						V.Local.sPart.Set("")
+					F.Intrinsic.Control.EndIf
+					'Set up v.local.sST(4)
+					V.Local.fRT.Set(V.Local.sST(4))
+					V.Local.sDesc.Set(V.Local.sST(6))
+				F.Intrinsic.Control.EndIf
+				'F.Intrinsic.Control.Next(v.Local.iPos)
+				'code to validate Part
+				F.Global.Inventory.GetPartInfo(V.Local.sPart,"","",V.Local.sReadFile)
+				F.Intrinsic.Control.If(V.Local.sReadFile,=,"***NOPARTFOUND***")
+					F.Global.Inventory.CreatePart(V.Local.sPart,"EA",V.Local.sDesc,"","FG","","","","0.0")
+					F.Intrinsic.String.Concat(V.Local.sPart,"' has been added to Inventory as it did not exist, please add Price to the part.",V.Local.sText)
+					F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sText)
+				F.Intrinsic.Control.EndIf
+				'code to validate WC
+				F.Intrinsic.String.Concat("Select Machine from WORKCENTERS where Machine='",V.Local.sWC,"'",V.Local.sSQL)
+				F.ODBC.Connection!con.OpenRecordsetRO("rstWC",V.Local.sSQL)
+				F.Intrinsic.Control.If(V.ODBC.con!rstWC.EOF,=,True)
+					'write to log WC doesn't exsist
+					F.Intrinsic.String.Concat("The following WC does not exist in the WORKCENTER table '",V.Local.sWC,"'",V.Local.stext)
+					F.Intrinsic.Control.CallSub(Errorlog,"sText",V.Local.sWC)
+				F.Intrinsic.Control.EndIf
+				F.ODBC.con!rstWC.Close
+				'code to validate Router
+				F.Intrinsic.String.Concat("Select Router from V_Router_Header where Router='",V.Local.sPart,"'",V.Local.sSQL)
+				F.ODBC.Connection!con.OpenRecordsetRO("rstRtr",V.Local.sSQL)
+				F.Intrinsic.Control.If(V.ODBC.con!rstRtr.EOF,"=",False)
+					''log to error log
+					F.Intrinsic.String.Concat("Router : ",V.Local.sParent," has already been uploaded",V.Local.sText)
+					F.Intrinsic.Control.CallSub("ErrorLog","sText",V.Local.sText)
+				F.Intrinsic.Control.EndIf
+				F.ODBC.con!rstRtr.Close
+				'code to addrecord for Router or BOM
+				F.Intrinsic.Control.CallSub("RouterAddRecord","Number",V.Local.sParent,"LMO",V.Local.sLMO,"RunTIme",V.Local.fRT,"Comment","","Workcenter",V.Local.sWC,"Operation",V.Local.sOp,"OverLap","","UM",V.Local.sUM,"Part",V.Local.sPart)
+			'F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.Next(V.Local.iRow)
+	F.Intrinsic.Control.Next(V.Local.ix)
+F.Intrinsic.Control.Endif
+F.Intrinsic.Control.CallSub("RouterGenerate")
+F.Automation.MSExcel.DestroyAllObjects(V.Local.sApp,V.Local.sWB,V.Local.sWS)
+F.Intrinsic.Control.CallSub(Unload)
+
+
+
+Program.Sub.BOM.End
+
+Program.Sub.Selection.Start
+F.Intrinsic.Debug.Stop
+F.Intrinsic.Control.If(V.Screen.F_UL_Select!optUL0.Value,=,True)
+	F.Intrinsic.Control.CallSub(Router)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(Bom)
+F.Intrinsic.Control.EndIf
+
+Program.Sub.Selection.End
+
+
